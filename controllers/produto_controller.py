@@ -1,49 +1,153 @@
-from flask import Blueprint, render_template, request, jsonify
+"""Routes for the inventory dashboard and product REST API."""
+
+import math
+from typing import Any, Tuple
+
+from flask import Blueprint, Response, render_template, request
+
 from models.produto_model import ProdutoModel
+from utils.api_response import api_response
 
-produto_bp = Blueprint('produto', __name__)
 
-@produto_bp.route('/')
-def index():
-    """Renderiza a página principal (View)."""
-    return render_template('index.html')
+produto_bp: Blueprint = Blueprint("produto", __name__)
 
-@produto_bp.route('/api/produtos', methods=['GET'])
-def get_produtos():
-    """Retorna todos os produtos em JSON."""
+
+@produto_bp.route("/")
+def index() -> str:
+    """Render the inventory dashboard.
+
+    Returns:
+        The rendered dashboard HTML.
+    """
+    return render_template("index.html")
+
+
+@produto_bp.route("/api/produtos", methods=["GET"])
+def get_produtos() -> Tuple[Response, int]:
+    """Return all products using the standard API response envelope.
+
+    Returns:
+        A JSON response containing the product list.
+    """
     produtos = ProdutoModel.listar_todos()
-    return jsonify({'sucesso': True, 'dados': produtos}), 200
+    return api_response(
+        success=True,
+        data=produtos,
+        message="Produtos carregados com sucesso.",
+    )
 
-@produto_bp.route('/api/produtos', methods=['POST'])
-def add_produto():
-    """Recebe dados via JSON, valida regras de negócio e insere no banco."""
-    data = request.get_json()
-    
-    if not data or not data.get('nome') or not data.get('preco'):
-        return jsonify({'sucesso': False, 'mensagem': 'Preencha todos os campos obrigatórios!'}), 400
+
+@produto_bp.route("/api/produtos", methods=["POST"])
+def add_produto() -> Tuple[Response, int]:
+    """Validate and create a product from a JSON request.
+
+    Returns:
+        A JSON response containing the new product ID or validation error.
+    """
+    payload: Any = request.get_json(silent=True)
+    if not isinstance(payload, dict):
+        return api_response(
+            success=False,
+            data=None,
+            message="Envie os dados do produto em formato JSON.",
+            status_code=400,
+        )
+
+    raw_nome = payload.get("nome")
+    raw_categoria = payload.get("categoria", "Geral")
+    raw_preco = payload.get("preco")
+    raw_quantidade = payload.get("quantidade", 0)
+
+    if not isinstance(raw_nome, str) or not raw_nome.strip():
+        return api_response(
+            success=False,
+            data=None,
+            message="Informe o nome do produto.",
+            status_code=400,
+        )
+    if not isinstance(raw_categoria, str):
+        return api_response(
+            success=False,
+            data=None,
+            message="A categoria deve ser um texto.",
+            status_code=400,
+        )
+    if isinstance(raw_preco, bool) or not isinstance(raw_preco, (str, int, float)):
+        return api_response(
+            success=False,
+            data=None,
+            message="Informe um preço numérico válido.",
+            status_code=400,
+        )
+    if isinstance(raw_quantidade, bool) or not isinstance(
+        raw_quantidade, (str, int)
+    ):
+        return api_response(
+            success=False,
+            data=None,
+            message="Informe uma quantidade inteira válida.",
+            status_code=400,
+        )
 
     try:
-        nome = data['nome'].strip()
-        categoria = data.get('categoria', 'Geral').strip()
-        preco = float(data['preco'])
-        quantidade = int(data.get('quantidade', 0))
-
-        # Validação de Segurança / Regra de Negócio (Laudo de Qualidade)
-        if preco <= 0 or quantidade < 0:
-            return jsonify({'sucesso': False, 'mensagem': 'O preço deve ser maior que zero e a quantidade não pode ser negativa!'}), 400
-
-        novo_id = ProdutoModel.criar(nome, categoria, preco, quantidade)
-        return jsonify({'sucesso': True, 'id': novo_id, 'mensagem': 'Produto cadastrado com sucesso!'}), 201
-
+        preco = float(raw_preco)
+        quantidade = int(raw_quantidade)
     except ValueError:
-        return jsonify({'sucesso': False, 'mensagem': 'Valores numéricos inválidos!'}), 400
-    except Exception as e:
-        return jsonify({'sucesso': False, 'mensagem': str(e)}), 500
+        return api_response(
+            success=False,
+            data=None,
+            message="Preço ou quantidade com formato inválido.",
+            status_code=400,
+        )
 
-@produto_bp.route('/api/produtos/<int:produto_id>', methods=['DELETE'])
-def delete_produto(produto_id):
-    """Deleta o produto pelo ID."""
+    if (
+        not math.isfinite(preco)
+        or preco <= 0
+        or quantidade < 0
+        or quantidade > 9223372036854775807
+    ):
+        return api_response(
+            success=False,
+            data=None,
+            message="O preço deve ser positivo e a quantidade deve ser um inteiro válido.",
+            status_code=400,
+        )
+
+    categoria = raw_categoria.strip() or "Geral"
+    novo_id = ProdutoModel.criar(
+        raw_nome.strip(),
+        categoria,
+        preco,
+        quantidade,
+    )
+    return api_response(
+        success=True,
+        data={"id": novo_id},
+        message="Produto cadastrado com sucesso.",
+        status_code=201,
+    )
+
+
+@produto_bp.route("/api/produtos/<int:produto_id>", methods=["DELETE"])
+def delete_produto(produto_id: int) -> Tuple[Response, int]:
+    """Delete a product by ID.
+
+    Args:
+        produto_id: ID from the product resource URL.
+
+    Returns:
+        A JSON response indicating whether the product was deleted.
+    """
     sucesso = ProdutoModel.deletar(produto_id)
-    if sucesso:
-        return jsonify({'sucesso': True, 'mensagem': 'Produto excluído com sucesso!'}), 200
-    return jsonify({'sucesso': False, 'mensagem': 'Produto não encontrado.'}), 404
+    if not sucesso:
+        return api_response(
+            success=False,
+            data=None,
+            message="Produto não encontrado.",
+            status_code=404,
+        )
+    return api_response(
+        success=True,
+        data={"id": produto_id},
+        message="Produto excluído com sucesso.",
+    )

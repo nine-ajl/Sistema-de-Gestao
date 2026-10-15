@@ -72,7 +72,7 @@ A aplicação foi estruturada seguindo rigorosamente o padrão de arquitetura **
 ## 🛠️ Tecnologias Utilizadas
 
 - **Back-end:** Python 3.11+, Flask 3.0
-- **Front-end:** HTML5, CSS3 (CSS Grid/Flexbox), JavaScript ES6+ (Fetch API)
+- **Front-end:** HTML5, Tailwind CSS 3 via CDN, JavaScript ES6+ (Fetch API), Lucide e Toastify
 - **Banco de Dados:** SQLite3 / MySQL
 - **Gerenciamento de Dependências:** `pip`
 - **Controle de Versão:** Git e GitHub
@@ -96,9 +96,10 @@ PIT2-Sistema-de-Gestao/
 │   ├── __init__.py
 │   └── produto_controller.py
 │
+├── utils/                      # Utilitários compartilhados
+│   └── api_response.py
+│
 ├── static/                     # Arquivos Estáticos da View
-│   ├── css/
-│   │   └── style.css
 │   └── js/
 │       └── main.js
 │
@@ -138,12 +139,20 @@ PIT2-Sistema-de-Gestao/
    pip install -r requirements.txt
    ```
 
-4. **Executar a aplicação:**
+4. **(Opcional) Configurar variáveis de ambiente:** crie um arquivo `.env` na raiz do projeto:
+   ```dotenv
+   PORT=5000
+   FLASK_DEBUG=false
+   DATABASE_PATH=database.db
+   ```
+   `DATABASE_PATH` pode receber um caminho absoluto ou relativo à pasta de execução. O arquivo `.env` não deve ser enviado ao Git.
+
+5. **Executar a aplicação:**
    ```bash
    python app.py
    ```
 
-5. **Acessar no navegador:**
+6. **Acessar no navegador:**
    Abra seu navegador web e acesse `http://127.0.0.1:5000`.
 
 ---
@@ -156,6 +165,9 @@ PIT2-Sistema-de-Gestao/
 | **GET** | `/api/produtos` | Retorna todos os produtos em JSON | `200 OK` |
 | **POST** | `/api/produtos` | Cadastra um novo produto | `201 Created` / `400 Bad Request` |
 | **DELETE** | `/api/produtos/<id>` | Deleta o produto pelo ID especificado | `200 OK` / `404 Not Found` |
+
+As respostas JSON seguem o formato `{ "success": true, "data": {}, "message": "...", "timestamp": "..." }`.
+Os valores de `data` variam conforme a rota; erros de validação e erros HTTP usam o mesmo envelope.
 
 ---
 
