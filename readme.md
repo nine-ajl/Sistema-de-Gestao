@@ -7,7 +7,6 @@
 ![Architecture](https://img.shields.io/badge/Architecture-MVC-green)
 ![License](https://img.shields.io/badge/License-MIT-brightgreen)
 
-> **Projeto Integrador Transdisciplinar em Sistemas de Informação II (PIT-II)**  
 > Aplicação web desenvolvida para controle centralizado de estoque, produtos e categorias, com foco em arquitetura limpa, usabilidade e comunicação assíncrona.
 
 ---
@@ -27,7 +26,7 @@
 
 ## 🚀 Sobre o Projeto
 
-O **Sistema de Gestão de Estoque e Produtos** foi desenvolvido como requisito prático da disciplina **PIT-II**. O sistema resolve problemas comuns de desorganização operacional e inconsistência em cadastros, oferecendo uma interface responsiva acoplada a uma API REST e banco de dados relacional.
+O **Sistema de Gestão de Estoque e Produtos** . O sistema resolve problemas comuns de desorganização operacional e inconsistência em cadastros, oferecendo uma interface responsiva acoplada a uma API REST e banco de dados relacional.
 
 ---
 
@@ -186,6 +185,3 @@ O sistema passou por ciclos de testes de verificação e validação, incluindo 
 **Karine de Oliveira Menezes**  
 Estudante de Sistemas de Informação  
 [GitHub](https://github.com/karinemenezes) | [LinkedIn](https://linkedin.com)
-
----
-*Projeto desenvolvido para a disciplina de Projeto Integrador Transdisciplinar em Sistemas de Informação II (PIT-II).*
